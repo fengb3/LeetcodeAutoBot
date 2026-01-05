@@ -7,8 +7,6 @@
 - 🤖 **自动登录**: 支持 LeetCode 中国站 (leetcode.cn) 自动登录。
 - 📅 **每日一题**: 自动识别并完成当天的每日一题。
 - 🍪 **Cookie 持久化**: 将登录状态保存至数据库，减少重复登录次数。
-- ⏰ **定时任务**: 提供 PowerShell 脚本，轻松注册 Windows 任务计划程序。
-- 🐳 **Docker 支持**: 支持容器化部署。
 
 ## 🛠️ 环境要求
 
@@ -27,55 +25,75 @@ cd LeetcodeAutoBot
 
 ### 2. 运行项目
 
-直接运行项目即可，首次运行会自动安装所需的 Playwright 浏览器内核。
+本项目通过环境变量 `CI` 来控制浏览器的运行模式：
+- `CI=false` (默认): **有头模式**，浏览器窗口可见。用于首次登录。
+- `CI=true`: **无头模式**，浏览器在后台运行。用于日常自动挂机。
+
+#### 🟢 首次运行 (手动登录)
+
+首次运行时，需要看到浏览器窗口以便手动输入账号密码。请使用默认配置运行：
 
 ```bash
+# 默认配置 (CI=false)，会弹出浏览器窗口
 dotnet run --project LeetcodeAutoBot
 ```
 
-### 3. 首次登录说明
+1.  程序启动后会自动打开一个浏览器窗口并跳转到 LeetCode。
+2.  请在浏览器中 **手动输入账号密码登录**。
+3.  登录成功后，程序会自动捕获 Cookie 并保存到数据库。
+4.  看到控制台提示 "Cookie 保存成功" 后，即可关闭程序。
 
-1.  **首次运行**时，程序会启动一个浏览器窗口。
-2.  请在浏览器中 **手动输入账号密码登录** LeetCode。
-3.  登录成功后，程序会自动捕获并保存 Cookie。
-4.  **后续运行**将自动使用保存的 Cookie，无需再次手动登录，也无需配置账号密码。
+#### 🔵 后续运行 (自动挂机)
 
-## 📅 定时任务 (Windows)
+登录状态保存后，后续运行应使用 **无头模式**，以免打扰日常使用：
 
-本项目提供了一个 PowerShell 脚本 `Register-Task.ps1`，可以将机器人注册为 Windows 定时任务，实现全自动挂机。
+```bash
+# CI 配置 (CI=true)，浏览器在后台静默运行
+dotnet run --project LeetcodeAutoBot --launch-profile "LeetcodeAutoBot - CI"
+```
+
+程序会自动读取数据库中的 Cookie 进行登录并完成每日一题。
+
+## 📅 定时任务
+
+### Windows
+
+本项目提供了一个 PowerShell 脚本 `Register-Task-Windows.ps1`，可以将机器人注册为 Windows 定时任务。
 
 1. **以管理员身份** 打开 PowerShell。
 2. 进入项目根目录。
 3. 运行注册脚本：
 
 ```powershell
-.\Register-Task.ps1
+.\Register-Task-Windows.ps1
+```
+
+### macOS
+
+本项目提供了一个 Shell 脚本 `register-task-mac.sh`，可以将机器人注册为 macOS Launch Agent。
+
+1. 打开终端 (Terminal)。
+2. 进入项目根目录。
+3. 赋予脚本执行权限并运行：
+
+```bash
+chmod +x register-task-mac.sh
+./register-task-mac.sh
 ```
 
 **脚本说明:**
 - 默认运行时间为每天 **09:00**。
-- 你可以用文本编辑器打开 `Register-Task.ps1` 修改 `$Time` 变量来调整时间。
-- 任务名称为 `LeetcodeAutoBot`，可以在 Windows "任务计划程序" 中查看和管理。
+- 任务名称为 `com.leetcodeautobot.daily`。
+- 日志会输出到项目目录下的 `stdout.log` 和 `stderr.log`。
 
-## 🐳 Docker 部署
+## 📄 开源协议 (License)
 
-如果你更喜欢使用 Docker：
+本项目采用 **非商业性教育许可 (Non-Commercial Educational License)**。
 
-1. **构建镜像**
+- ✅ **允许**: 个人学习、研究、非营利性教育使用。
+- 🚫 **禁止**: 任何形式的商业用途（包括但不限于付费服务、售卖代码、集成到商业产品）。
 
-```bash
-docker build -t leetcode-autobot -f LeetcodeAutoBot/Dockerfile .
-```
-
-2. **运行容器**
-
-```bash
-docker run -d \
-  -e LEETCODE__USERNAME="你的账号" \
-  -e LEETCODE__PASSWORD="你的密码" \
-  --name leetcode-bot \
-  leetcode-autobot
-```
+详见 [LICENSE](LICENSE) 文件。
 
 ## ⚠️ 免责声明
 
