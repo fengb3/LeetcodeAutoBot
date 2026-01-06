@@ -3,8 +3,11 @@ using LeetcodeAutoBot.DependencyInjection;
 using LeetcodeAutoBot.Services;
 using Serilog;
 
+const string outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u4}] {Message:lj}{NewLine}{Exception}";
+
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo.Console(outputTemplate: outputTemplate)
+    .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day, outputTemplate: outputTemplate)
     .CreateLogger();
 
 var builder = Host.CreateApplicationBuilder(args);
