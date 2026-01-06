@@ -94,7 +94,7 @@ public class Worker(ILogger<Worker> logger, IServiceProvider root) : BackgroundS
                 {
                     query = """
                             query CalendarTaskSchedule($days: Int!) {
-                            calendarTaskSchedule(days: $days) {
+                              calendarTaskSchedule(days: $days) {
                                 dailyQuestions {
                                   id
                                   name
@@ -140,7 +140,41 @@ public class Worker(ILogger<Worker> logger, IServiceProvider root) : BackgroundS
             {
                 DataObject = new
                 {
-                    query = "\n    query problemsetQuestionListV2($filters: QuestionFilterInput, $limit: Int, $searchKeyword: String, $skip: Int, $sortBy: QuestionSortByInput, $categorySlug: String) {\n  problemsetQuestionListV2(\n    filters: $filters\n    limit: $limit\n    searchKeyword: $searchKeyword\n    skip: $skip\n    sortBy: $sortBy\n    categorySlug: $categorySlug\n  ) {\n    questions {\n      id\n      titleSlug\n      title\n      translatedTitle\n      questionFrontendId\n      paidOnly\n      difficulty\n      topicTags {\n        name\n        slug\n        nameTranslated\n      }\n      status\n      isInMyFavorites\n      frequency\n      acRate\n      contestPoint\n    }\n    totalLength\n    finishedLength\n    hasMore\n  }\n}\n    ",
+                    query = """
+                            query problemsetQuestionListV2($filters: QuestionFilterInput, $limit: Int, $searchKeyword: String, $skip: Int, $sortBy: QuestionSortByInput, $categorySlug: String) {
+                              problemsetQuestionListV2(
+                                filters: $filters
+                                limit: $limit
+                                searchKeyword: $searchKeyword
+                                skip: $skip
+                                sortBy: $sortBy
+                                categorySlug: $categorySlug
+                              ) {
+                                questions {
+                                  id
+                                  titleSlug
+                                  title
+                                  translatedTitle
+                                  questionFrontendId
+                                  paidOnly
+                                  difficulty
+                                  topicTags {
+                                    name
+                                    slug
+                                    nameTranslated
+                                  }
+                                  status
+                                  isInMyFavorites
+                                  frequency
+                                  acRate
+                                  contestPoint
+                                }
+                                totalLength
+                                finishedLength
+                                hasMore
+                              }
+                            }
+                            """,
                     variables = new
                     {
                         skip         = 0,
@@ -151,8 +185,8 @@ public class Worker(ILogger<Worker> logger, IServiceProvider root) : BackgroundS
                             filterCombineType = "ALL",
                             statusFilter = new
                             {
-                                questionStatuses = new[] { "TO_DO" },
-                                @operator        = "IS"
+                                questionStatuses = new[] { "SOLVED" },
+                                @operator        = "IS_NOT"
                             },
                             premiumFilter = new
                             {

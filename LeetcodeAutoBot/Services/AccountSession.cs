@@ -16,7 +16,7 @@ public record AccountSession(IServiceProvider sp, IConfiguration config)
         get
         {
             var dbContext = sp.GetRequiredService<LeetcodeAutoBotDbContext>();
-            var cookies   = dbContext.Cookies.Where(c => c.AccountId == AccountId).ToArray();
+            var cookies   = dbContext.Cookies.AsNoTracking().Where(c => c.AccountId == AccountId).ToArray();
             return cookies;
         }
         set

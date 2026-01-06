@@ -135,6 +135,7 @@ public static class DbHelper
             else
             {
                 dbSet.Add(entity);
+                items.Add(key, entity);
             }
         }
     }

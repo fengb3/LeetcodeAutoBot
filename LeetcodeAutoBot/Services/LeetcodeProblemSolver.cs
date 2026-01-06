@@ -16,10 +16,10 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
         IAsyncDisposable
 {
     public string solutionLanguage = "";
-    public string problemSlug = "";
-    public string solutionSlug = "";
-    public string solutionTopicId = "";
-    public string solutionUrl = "";
+    public string problemSlug      = "";
+    public string solutionSlug     = "";
+    public string solutionTopicId  = "";
+    public string solutionUrl      = "";
 
     public async Task SolveProblemAsync(string problemUrl)
     {
@@ -35,85 +35,85 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
                 DataObject = new
                 {
                     query = """
-                    query questionTopicsList($questionSlug: String!, $skip: Int, $first: Int, $orderBy: SolutionArticleOrderBy, $userInput: String, $tagSlugs: [String!]) {
-                      questionSolutionArticles(
-                        questionSlug: $questionSlug
-                        skip: $skip
-                        first: $first
-                        orderBy: $orderBy
-                        userInput: $userInput
-                        tagSlugs: $tagSlugs
-                      ) {
-                        totalNum
-                        edges {
-                          node {
-                            rewardEnabled
-                            canEditReward
-                            uuid
-                            title
-                            slug
-                            sunk
-                            chargeType
-                            status
-                            identifier
-                            canEdit
-                            canSee
-                            reactionType
-                            hasVideo
-                            favoriteCount
-                            upvoteCount
-                            reactionsV2 {
-                              count
-                              reactionType
-                            }
-                            tags {
-                              name
-                              nameTranslated
-                              slug
-                              tagType
-                            }
-                            createdAt
-                            thumbnail
-                            author {
-                              username
-                              certificationLevel
-                              profile {
-                                userAvatar
-                                userSlug
-                                realName
-                                reputation
+                            query questionTopicsList($questionSlug: String!, $skip: Int, $first: Int, $orderBy: SolutionArticleOrderBy, $userInput: String, $tagSlugs: [String!]) {
+                              questionSolutionArticles(
+                                questionSlug: $questionSlug
+                                skip: $skip
+                                first: $first
+                                orderBy: $orderBy
+                                userInput: $userInput
+                                tagSlugs: $tagSlugs
+                              ) {
+                                totalNum
+                                edges {
+                                  node {
+                                    rewardEnabled
+                                    canEditReward
+                                    uuid
+                                    title
+                                    slug
+                                    sunk
+                                    chargeType
+                                    status
+                                    identifier
+                                    canEdit
+                                    canSee
+                                    reactionType
+                                    hasVideo
+                                    favoriteCount
+                                    upvoteCount
+                                    reactionsV2 {
+                                      count
+                                      reactionType
+                                    }
+                                    tags {
+                                      name
+                                      nameTranslated
+                                      slug
+                                      tagType
+                                    }
+                                    createdAt
+                                    thumbnail
+                                    author {
+                                      username
+                                      certificationLevel
+                                      profile {
+                                        userAvatar
+                                        userSlug
+                                        realName
+                                        reputation
+                                      }
+                                    }
+                                    summary
+                                    topic {
+                                      id
+                                      commentCount
+                                      viewCount
+                                      pinned
+                                    }
+                                    byLeetcode
+                                    isMyFavorite
+                                    isMostPopular
+                                    isEditorsPick
+                                    hitCount
+                                    videosInfo {
+                                      videoId
+                                      coverUrl
+                                      duration
+                                    }
+                                  }
+                                }
                               }
                             }
-                            summary
-                            topic {
-                              id
-                              commentCount
-                              viewCount
-                              pinned
-                            }
-                            byLeetcode
-                            isMyFavorite
-                            isMostPopular
-                            isEditorsPick
-                            hitCount
-                            videosInfo {
-                              videoId
-                              coverUrl
-                              duration
-                            }
-                          }
-                        }
-                      }
-                    }
-                    """,
+                            """,
                     variables = new
                     {
                         questionSlug = problemSlug,
-                        skip = 0,
-                        first = 5,
-                        orderBy = "DEFAULT",
-                        userInput = "",
-                        tagSlugs = Array.Empty<string>(),
+                        skip         = 0,
+                        first        = 5,
+                        orderBy      = "DEFAULT",
+                        userInput    = "",
+                        tagSlugs     = Array.Empty<string>(),
                     },
                     operationName = "questionTopicsList",
                 },
@@ -134,8 +134,7 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
             .EnumerateArray()
             .ToArray();
 
-        var officialEdge = edges.FirstOrDefault(edge =>
-        {
+        var officialEdge = edges.FirstOrDefault(edge => {
             var level = edge.GetProperty("node")
                 .GetProperty("author")
                 .GetProperty("certificationLevel")
@@ -199,9 +198,33 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
             return;
         }
 
-        var codeBlock = page.Locator(codeBlockSelector).First;
+        var       codeBlocks = page.Locator(codeBlockSelector);
+        var       count      = await codeBlocks.CountAsync();
+        ILocator? codeBlock  = null;
+        ILocator? tabs       = null;
 
-        var tabs = codeBlock.Locator("div.flex.select-none.overflow-x-auto > div");
+        // 从后往前找，第一个有多个语言选项的代码块, 通常是最完整的解法
+        for (int i = count; i >= 0 ; i--)
+        {
+            var block       = codeBlocks.Nth(i);
+            var tabsInBlock = block.Locator("div.flex.select-none.overflow-x-auto > div");
+
+            // var txt         = string.Join("\n", await block.AllInnerTextsAsync(), '\n');
+            // var tabsTxt     = string.Join(',', await tabsInBlock.AllInnerTextsAsync());
+            // var txtCombined = $"Code Block {i + 1}/{count} with tabs [{tabsTxt}]:\n{txt}";
+            // logger.LogInformation(txtCombined);
+
+            if (await tabsInBlock.CountAsync() > 1)
+            {
+                codeBlock = block;
+                tabs = tabsInBlock;
+                break;
+            }
+        }
+
+        codeBlock ??= codeBlocks.First;
+        tabs      ??= codeBlock.Locator("div.flex.select-none.overflow-x-auto > div");
+        
         var pythonTab = tabs.Filter(new LocatorFilterOptions { HasText = "python" });
 
         if (await pythonTab.CountAsync() > 0)
@@ -213,6 +236,7 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
         var activeTab = codeBlock.Locator(
             "div.flex.select-none.overflow-x-auto > div.text-label-1"
         );
+        
         if (await activeTab.CountAsync() > 0)
         {
             solutionLanguage = await activeTab.InnerTextAsync();
@@ -220,7 +244,7 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
         else
         {
             var codeLocatorForClass = codeBlock.Locator("pre > code");
-            var classAttr = await codeLocatorForClass.GetAttributeAsync("class");
+            var classAttr           = await codeLocatorForClass.GetAttributeAsync("class");
             if (!string.IsNullOrEmpty(classAttr))
             {
                 var match = ProgramLanguageRegex().Match(classAttr);
@@ -233,7 +257,7 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
         }
 
         var codeLocator = codeBlock.Locator("pre > code");
-        var code = await codeLocator.InnerTextAsync();
+        var code        = await codeLocator.InnerTextAsync();
 
         await page.ShowNotificationAsync($"答案语言: {solutionLanguage}", 3000);
         await page.ShowNotificationAsync($"答案代码共 {code.Length} 个字符", 3000);
@@ -336,13 +360,13 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
                     // Let's try to match both or just wait a bit and see if a dialog appears.
                     try
                     {
-                        var confirmDialogBtn = page.Locator("button.is-danger"); // Often the confirm button is red/danger
+                        var confirmDialogBtn = page.Locator("button.is-danger");// Often the confirm button is red/danger
                         if (await confirmDialogBtn.IsVisibleAsync())
                         {
                             await confirmDialogBtn.ClickAsync();
                         }
                     }
-                    catch { }
+                    catch {}
                 }
                 else
                 {
@@ -423,45 +447,45 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
                         DataObject = new
                         {
                             query = """
-                            query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {
-                              submissionList(
-                                offset: $offset
-                                limit: $limit
-                                lastKey: $lastKey
-                                questionSlug: $questionSlug
-                                lang: $lang
-                                status: $status
-                              ) {
-                                lastKey
-                                hasNext
-                                submissions {
-                                  id
-                                  title
-                                  status
-                                  statusDisplay
-                                  lang
-                                  langName: langVerboseName
-                                  runtime
-                                  timestamp
-                                  url
-                                  isPending
-                                  memory
-                                  frontendId
-                                  submissionComment {
-                                    comment
-                                    flagType
-                                  }
-                                }
-                              }
-                            }
-                            """,
+                                    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {
+                                      submissionList(
+                                        offset: $offset
+                                        limit: $limit
+                                        lastKey: $lastKey
+                                        questionSlug: $questionSlug
+                                        lang: $lang
+                                        status: $status
+                                      ) {
+                                        lastKey
+                                        hasNext
+                                        submissions {
+                                          id
+                                          title
+                                          status
+                                          statusDisplay
+                                          lang
+                                          langName: langVerboseName
+                                          runtime
+                                          timestamp
+                                          url
+                                          isPending
+                                          memory
+                                          frontendId
+                                          submissionComment {
+                                            comment
+                                            flagType
+                                          }
+                                        }
+                                      }
+                                    }
+                                    """,
                             variables = new
                             {
                                 questionSlug = problemSlug,
-                                offset = 0,
-                                limit = 20,
-                                lastKey = (string?)null,
-                                status = (string?)null,
+                                offset       = 0,
+                                limit        = 20,
+                                lastKey      = (string?)null,
+                                status       = (string?)null,
                             },
                             operationName = "submissionList",
                         },
@@ -477,9 +501,9 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
                     continue;
                 }
 
-                var data = submissionResponseBody.Value.GetProperty("data");
+                var data           = submissionResponseBody.Value.GetProperty("data");
                 var submissionList = data.GetProperty("submissionList");
-                var submissions = submissionList.GetProperty("submissions");
+                var submissions    = submissionList.GetProperty("submissions");
 
                 if (submissions.GetArrayLength() == 0)
                 {
@@ -489,8 +513,8 @@ public partial class LeetcodeProblemSolver(IPage page, ILogger<LeetcodeProblemSo
                 }
 
                 var latestSubmission = submissions[0];
-                var statusDisplay = latestSubmission.GetProperty("statusDisplay").GetString();
-                var isPending = latestSubmission.GetProperty("isPending").GetString();
+                var statusDisplay    = latestSubmission.GetProperty("statusDisplay").GetString();
+                var isPending        = latestSubmission.GetProperty("isPending").GetString();
 
                 logger.LogInformation(
                     "Submission status: {statusDisplay}, isPending: {isPending}",
