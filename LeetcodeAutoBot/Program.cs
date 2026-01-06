@@ -7,7 +7,7 @@ const string outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate: outputTemplate)
-    .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day, outputTemplate: outputTemplate)
+    .WriteTo.File("logs/log.log", rollingInterval: RollingInterval.Day, outputTemplate: outputTemplate)
     .CreateLogger();
 
 var builder = Host.CreateApplicationBuilder(args);
